@@ -12,12 +12,10 @@ static int gcm_crypt(lua_State *L, unsigned int mode) {
 	const unsigned char *const iv = (const unsigned char *)luaL_checklstring(L, 3, &ivLen);
 
 	mbedtls_gcm_context ctx;
-	mbedtls_gcm_init(&ctx);
-
-	const int err1 = mbedtls_gcm_setkey(&ctx, MBEDTLS_CIPHER_ID_AES, key, keyLen * 8);
+	const int err1 = mbedtls_gcm_init(&ctx, MBEDTLS_CIPHER_ID_AES, key, keyLen * 8);
 	if (err1) {
 		mbedtls_gcm_free(&ctx);
-		return luaL_error(L, "mbedtls_gcm_setkey failed: err:%d errno:%d", err1, errno);
+		return luaL_error(L, "mbedtls_gcm_init failed: err:%d errno:%d", err1, errno);
 	}
 
 	unsigned char *const output = (unsigned char *)malloc(dataLen);
