@@ -1,5 +1,5 @@
-Lua facade for PolarSSL/AES-GCM.
+Lua facade for mbedTLS/AES-GCM.
 
 Dependencies:
 * Lua 5.1+
-* PolarSSL 1.3+
+* mbedTLS 2.0+

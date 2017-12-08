@@ -4,9 +4,9 @@ CFLAGS += -O2 -fPIC
 LDFLAGS += -shared
 
 ifdef OPENWRT_BUILD
-	LDADD += -l:libpolarssl.a
+	LDADD += -l:libmbedtls.a
 else
-	LDFLAGS += -lpolarssl
+	LDFLAGS += -lmbedtls
 endif
 
 all: $(TARGET)

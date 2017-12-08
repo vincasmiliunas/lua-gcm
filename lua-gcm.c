@@ -3,7 +3,7 @@
 #include <errno.h>
 #include <lua.h>
 #include <lauxlib.h>
-#include <polarssl/gcm.h>
+#include <mbedtls/gcm.h>
 
 static int gcm_crypt(lua_State *L, unsigned int mode) {
 	size_t dataLen, keyLen, ivLen;
@@ -11,21 +11,24 @@ static int gcm_crypt(lua_State *L, unsigned int mode) {
 	const unsigned char *const key = (const unsigned char *)luaL_checklstring(L, 2, &keyLen);
 	const unsigned char *const iv = (const unsigned char *)luaL_checklstring(L, 3, &ivLen);
 
-	gcm_context ctx;
-	const int err1 = gcm_init(&ctx, POLARSSL_CIPHER_ID_AES, key, keyLen*8);
+	mbedtls_gcm_context ctx;
+	mbedtls_gcm_init(&ctx);
+
+	const int err1 = mbedtls_gcm_setkey(&ctx, MBEDTLS_CIPHER_ID_AES, key, keyLen * 8);
 	if (err1) {
-		return luaL_error(L, "gcm_init failed: %d", err1);
+		mbedtls_gcm_free(&ctx);
+		return luaL_error(L, "mbedtls_gcm_setkey failed: err:%d errno:%d", err1, errno);
 	}
 
 	unsigned char *const output = (unsigned char *)malloc(dataLen);
 	if (!output) {
-		gcm_free(&ctx);
+		mbedtls_gcm_free(&ctx);
 		return luaL_error(L, "malloc failed: %d", errno);
 	}
 
 	const size_t tagLen = 16;
 	unsigned char tag[tagLen];
-	const int err2 = gcm_crypt_and_tag(
+	const int err2 = mbedtls_gcm_crypt_and_tag(
 		&ctx,
 		mode,
 		dataLen,
@@ -33,10 +36,10 @@ static int gcm_crypt(lua_State *L, unsigned int mode) {
 		NULL, 0,
 		data, output,
 		tagLen, tag);
-	gcm_free(&ctx);
+	mbedtls_gcm_free(&ctx);
 	if (err2) {
 		free(output);
-		return luaL_error(L, "gcm_crypt_and_tag failed: %d", err2);
+		return luaL_error(L, "mbedtls_gcm_crypt_and_tag failed: err:%d errno:%d", err2, errno);
 	}
 
 	lua_pushlstring(L, (const unsigned char *)output, dataLen);
@@ -47,11 +50,11 @@ static int gcm_crypt(lua_State *L, unsigned int mode) {
 }
 
 static int gcm_encrypt(lua_State *L) {
-	return gcm_crypt(L, GCM_ENCRYPT);
+	return gcm_crypt(L, MBEDTLS_GCM_ENCRYPT);
 }
 
 static int gcm_decrypt(lua_State *L) {
-	return gcm_crypt(L, GCM_DECRYPT);
+	return gcm_crypt(L, MBEDTLS_GCM_DECRYPT);
 }
 
 /*
